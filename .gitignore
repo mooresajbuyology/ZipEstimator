@@ -1,0 +1,6 @@
+/buyer_zips
+/Manual files
+/Raw_leads
+.env
+*.xlsx
+*.csv
