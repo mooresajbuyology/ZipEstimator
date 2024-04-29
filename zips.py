@@ -26,7 +26,8 @@ vertical_id=134
 start_date="2024-03-01"
 end_date="2024-04-01"
 #bathroom 134 tubs 94
-#sales_data = 'Raw_leads/bath_March_2024.csv'
+use_csv_file_for_raw_leads=False
+sales_data = 'Raw_leads/bath_March_2024.csv'
 
 #additional parameters to consider tweaking
 buyer_price_increments=int(5)
@@ -70,14 +71,13 @@ WHERE
     buyer_leads.transaction_date BETWEEN '{start_date}' AND '{end_date}' ;
 """
 
-if 'sales_data' in locals() or 'sales_data' in globals():
+if use_csv_file_for_raw_leads==True:
     # Read CSV files
     sales = pd.read_csv(sales_data, dtype={'Zip': str})
 else:
     sales=pd.read_sql(raw_leads_query, production_engine, dtype={'Zip': str})
 
 # Function to read file based on file extension
-    
 zipcodes =[]
 
 if zipcode_data.endswith('.csv'):
@@ -95,19 +95,6 @@ def validate_zip_codes(zipcodes):
         if not zipcode.isdigit() or len(zipcode) != 5:
             invalid_zipcodes.append(zipcode)
     return invalid_zipcodes
-
-#old function
-# def validate_zip_codes(zipcodes):
-#     invalid_zipcodes = []
-#     line_count=0
-#     for zipcode in zipcodes:
-#         if line_count>0:  
-#             line_count=line_count+1
-#             line_callout=str(zipcode)+" On Line: "+str(line_count)
-#             # Assuming zip codes are integers, you may need different validation if they're strings
-#             if not str(zipcode).isdigit() or len(str(zipcode)) != 5:
-#                 invalid_zipcodes.append(line_callout)
-#     return invalid_zipcodes
 
 #filters out excluded buyer contracts and bad credit
 def filter_sales_data(sales):
@@ -201,7 +188,7 @@ if original_count_zips != final_count_zips:
     print(f"Warning: {original_count_zips - zip_counts_no_blank} blank and { zip_counts_no_blank-final_count_zips} duplicate zip codes were removed.")
 
 #clean data, merge and get totals
-if 'sales_data' in locals() or 'sales_data' in globals():
+if use_csv_file_for_raw_leads==True:
     sales['Price'] = sales['Price'].apply(clean_price)
 
 merged_data = pd.merge(sales, zipcodes, on='Zip', how='inner')
