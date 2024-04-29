@@ -14,19 +14,19 @@ load_dotenv()
 #
 
 zipcode_data = 'buyer_zips/buyer_zips.csv'
-target_price = float(68.18)
+target_price = float(65)
 skip_lines=1
 include_poor=False
-include_fair=True
+include_fair=False
 include_Good=True
 include_Excellent=True
-include_phone_no_match_not_found=False
+include_phone_no_match_not_found=True
 safety_only=False
-vertical_id=94
-start_date="'2024-03-01'"
-end_date="'2024-04-01'"
+vertical_id=134
+start_date="2024-03-01"
+end_date="2024-04-01"
 #bathroom 134 tubs 94
-sales_data = 'Raw_leads/tubs_partial_april.csv'
+#sales_data = 'Raw_leads/bath_March_2024.csv'
 
 #additional parameters to consider tweaking
 buyer_price_increments=int(5)
@@ -51,26 +51,31 @@ production_engine =create_engine(os.getenv("PROD_ENGINE"))
 # more work to match to db names and tables 
 raw_leads_query =f"""
 SELECT
-  *,
+  leads.unique_id as "Lead ID",
   postal_code as "Zip",
-  price_recieved as "Price",
-  "Phone Subscriber Name",
-  "Credit Rating",
-    "Buyer Contract",
-    "Phone Subscriber Name",
-    "Interested in Safety Products"
-FROM
-  leads
-Where
-    vertical_id={vertical_id}
+  buyer_leads.buyer_contract_id as "Contract_id",
+  buyer_leads.buyer_contract_name as "Buyer Contract",
+  buyer_leads.buyer_name as "Buyer Name",
+  buyer_leads.unique_lead_id,
+  buyer_leads.price_amount "Price",
+  COALESCE(leads.data -> 'walk_in_tubs_anura'::text, leads.data -> 'bathroom_remodel_anura'::text) AS "Anura",
+  COALESCE(leads.data -> 'walk_in_tubs_phone_subscriber_name'::text, leads.data -> 'bathroom_remodel_phone_subscriber_name'::text) AS "Phone Subscriber Name",
+  COALESCE(leads.data -> 'walk_in_tubs_creditrating'::text,leads.data -> 'bathroom_remodel_creditrating'::text)AS "Credit Rating",
+  COALESCE(leads.data -> 'walk_in_tubs_safetyfeatures'::text, leads.data -> 'bathroom_remodel_safetyproducts'::text) AS "Interested in Safety Products"
+FROM buyer_leads
+     JOIN leads ON buyer_leads.unique_lead_id::text = leads.unique_id::text
+WHERE
+    leads.vertical_id={vertical_id}
     AND
-    lead_date BETWEEN '{start_date}' AND '{end_date}' ;
+    buyer_leads.transaction_date BETWEEN '{start_date}' AND '{end_date}' ;
 """
 
+if 'sales_data' in locals() or 'sales_data' in globals():
+    # Read CSV files
+    sales = pd.read_csv(sales_data, dtype={'Zip': str})
+else:
+    sales=pd.read_sql(raw_leads_query, production_engine, dtype={'Zip': str})
 
-#sales=pd.read_sql(raw_leads_query, production_engine, dtype={'Zip': str})
-# Read CSV files
-sales = pd.read_csv(sales_data, dtype={'Zip': str})
 # Function to read file based on file extension
     
 zipcodes =[]
@@ -196,7 +201,9 @@ if original_count_zips != final_count_zips:
     print(f"Warning: {original_count_zips - zip_counts_no_blank} blank and { zip_counts_no_blank-final_count_zips} duplicate zip codes were removed.")
 
 #clean data, merge and get totals
-sales['Price'] = sales['Price'].apply(clean_price)
+if 'sales_data' in locals() or 'sales_data' in globals():
+    sales['Price'] = sales['Price'].apply(clean_price)
+
 merged_data = pd.merge(sales, zipcodes, on='Zip', how='inner')
 
 unfiltered_sales_in_zips = calculate_sales(merged_data, target_price)
