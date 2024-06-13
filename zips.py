@@ -23,8 +23,8 @@ include_Excellent=True
 include_phone_no_match_not_found=True
 safety_only=False
 vertical_id=134
-start_date="2024-03-01"
-end_date="2024-04-01"
+start_date="2024-04-01"
+end_date="2024-04-30"
 #bathroom 134 tubs 94
 use_csv_file_for_raw_leads=False
 sales_data = 'Raw_leads/bath_March_2024.csv'
@@ -136,7 +136,7 @@ def calculate_average(merged_data,max_price,include_0):
     return average_price
 
 #finds # of buyers in a price range given a data set
-def calculate_buyers_in_range(low_price,high_price,sales):
+def calculate_buyers_in_range(low_price,high_price,sales,return_name=False):
     price_filtered_data = sales[(low_price < sales['Price']) & (sales['Price'] <= high_price)]
     # Calculate total number of leads in the price range
     total_leads = price_filtered_data['Lead ID'].nunique()
@@ -144,7 +144,7 @@ def calculate_buyers_in_range(low_price,high_price,sales):
     # Calculate number of leads purchased by each buyer 
     buyer_lead_counts = price_filtered_data.groupby('Buyer Name')['Lead ID'].nunique().reset_index()
     buyer_lead_counts.rename(columns={'Lead ID': 'Buyer Leads'}, inplace=True)
-
+    
     # Filter buyers who purchased more than  ignore_buyer_percent % of the leads in the range
     qualified_buyers = buyer_lead_counts[buyer_lead_counts['Buyer Leads'] > ignore_buyer_percent * total_leads]
 
@@ -154,9 +154,10 @@ def calculate_buyers_in_range(low_price,high_price,sales):
 
     # Count the number of qualified buyers
     qualified_buyer_count = qualified_buyers.shape[0]
-
-    return qualified_buyer_count
-
+    if return_name==True:
+        return qualified_buyers['Buyer Name'].tolist()
+    else:
+        return qualified_buyer_count
 def calculate_leads_by_buyers(sales, buyers):
     buyer_filtered_data = sales[sales['Buyer Name'].isin(buyers)]
     # Calculate total number of leads in the price range
@@ -217,12 +218,14 @@ for price_range in range(int(win_below), int(target_price), buyer_price_incremen
         range_high = target_price
 
     leads_in_current_range=calculate_leads_in_range(range_low,range_high,sales)
-    buyers_in_current_range=calculate_buyers_in_range(range_low,range_high,sales)
-
-    expected_win_share_in_current_range=leads_in_current_range/(buyers_in_current_range+1)
+    buyers_count_in_current_range=calculate_buyers_in_range(range_low,range_high,sales)
+    buyers_names_in_current_range = calculate_buyers_in_range(range_low, range_high, sales, return_name=True)
+    buyers_names_in_current_range = ', '.join(buyers_names_in_current_range)
+    expected_win_share_in_current_range=leads_in_current_range/(buyers_count_in_current_range+1)
     total_leads_estimate_upperend+=expected_win_share_in_current_range
 
-    print(f"Price Range: {range_low} - {range_high}, Buyers: {buyers_in_current_range}, Leads:{leads_in_current_range}, Expected share:{round(expected_win_share_in_current_range,2)}")
+    print(f"Price Range: {range_low} - {range_high}, Buyers: {buyers_count_in_current_range} ({buyers_names_in_current_range}), Leads:{leads_in_current_range}, Expected share:{round(expected_win_share_in_current_range,2)}")
+    #print(f"Buyer Names:{buyers_names_in_current_range}")
 
 #get all Buyers in uper range
 total_buyers_upperend=calculate_buyers_in_range(win_below,target_price,sales)
