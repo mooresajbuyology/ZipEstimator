@@ -4,6 +4,7 @@ import math
 from sqlalchemy import create_engine
 import os
 from dotenv import load_dotenv
+from get_cake_zips import get_zips_from_cake
 load_dotenv()
 
 # Get user input uncomment to use and comment hard coded values
@@ -23,8 +24,8 @@ include_Excellent=True
 include_phone_no_match_not_found=True
 safety_only=False
 vertical_id=134
-start_date="2024-04-01"
-end_date="2024-04-30"
+start_date="2024-05-31"
+end_date="2024-06-13"
 #bathroom 134 tubs 94
 use_csv_file_for_raw_leads=False
 sales_data = 'Raw_leads/bath_March_2024.csv'
@@ -230,12 +231,13 @@ for price_range in range(int(win_below), int(target_price), buyer_price_incremen
 #get all Buyers in uper range
 total_buyers_upperend=calculate_buyers_in_range(win_below,target_price,sales)
 total_buyers_lowerend=calculate_buyers_in_range(-1,(win_below),sales)
+buyer_names_lowerend=calculate_buyers_in_range(-1,(win_below),sales,return_name=True)
 total_leads_upperend=calculate_leads_in_range(win_below,target_price,sales)
 total_leads_lowerend=calculate_leads_in_range(-1,(win_below),sales)
 
 # Display the result
 
 #print("Upper end",win_below," - ", target_price," Buyers:",total_buyers_upperend," Leads:",total_leads_upperend, "Estimated share: ", round(total_leads_estimate_upperend,2))
-print("Lower end between 0 - ",win_below," Buyers:",total_buyers_lowerend," Leads:",total_leads_lowerend,"(Sold to ourselves:",calculate_leads_by_buyers(sales,["BuyologyIQ"]),") Estimated share: ", total_leads_lowerend)
-print("Expected total lead share",round((total_leads_estimate_upperend+total_leads_lowerend),2))
+print(f"Lower end:  0 - {win_below}, Buyers: {total_buyers_lowerend} ({buyer_names_lowerend}), Leads: {total_leads_lowerend} (Sold to ourselves: {calculate_leads_by_buyers(sales, ['BuyologyIQ'])}), Estimated share: {total_leads_lowerend}")
+print(f"Expected total lead share {round((total_leads_estimate_upperend+total_leads_lowerend),2)}")
 
