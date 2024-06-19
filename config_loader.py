@@ -9,7 +9,7 @@ class ExcelConfig:
         df = pd.read_excel(file, sheet_name=sheet)
         # Fill NaN values with None to handle blanks in the Excel file
         df = df.fillna('')
-        return df.set_index('Parameter')['Client_value'].to_dict()
+        return df.set_index('Parameter')['Value'].to_dict()
 
     def get(self, key):
         # Return the parameter value if it exists, otherwise return the default value
