@@ -6,9 +6,14 @@ class ExcelConfig:
 
     @staticmethod
     def load_parameters(file, sheet):
-        df = pd.read_excel(file, sheet_name=sheet)
-        # Fill NaN values with None to handle blanks in the Excel file
+        if file.endswith('.csv'):
+            df = pd.read_csv(file)
+        elif file.endswith('.xlsx', '.xls'):
+            df = pd.read_excel(file, sheet_name=sheet)
+        else:
+            raise ValueError("Unsupported file format. Please provide a CSV or Excel file.")
         df = df.fillna('')
+       
         return df.set_index('Parameter')['Value'].to_dict()
 
     def get(self, key):
