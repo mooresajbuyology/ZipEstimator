@@ -1,0 +1,24 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Run deployment script on Windows machine
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.WINDOWS_HOST }}
+        username: ${{ secrets.WINDOWS_USERNAME }}
+        key: ${{ secrets.WINDOWS_SSH_KEY }}
+        port: 22
+        script: |
+          powershell -File C:\Users\admin\Desktop\Development\ZipEstimator\deploy.ps1
