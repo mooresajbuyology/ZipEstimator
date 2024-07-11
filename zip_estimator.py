@@ -59,7 +59,7 @@ buyer_price_increments=int(5)
 #win_below= round((target_price * 0.7),0)
 win_below = math.floor(target_price * 0.5 / buyer_price_increments) * buyer_price_increments
 ignore_sweeper_buyers="no"
-ignore_buyer_percent=float(0.0001)
+ignore_buyer_percent=float(0.15)
 
 #key variables hard coded
 credit_rating_Poor_exclude_value = ["Poor"]

@@ -6,7 +6,15 @@ load_dotenv()
 import pandas as pd
 
 api_key=os.getenv("API_POST_KEY")
-base_url = "https://track.epathmedia.com/api/4/EXPORT.asmx/BuyerContracts"
+get_contract_base_url = "https://track.epathmedia.com/api/4/EXPORT.asmx/BuyerContracts"
+get_buyers_base_url = "https://track.epathmedia.com/api/2/export.asmx/Buyers"
+
+def cake_get_request(api_url, params):
+    response = requests.get(api_url, params=params)
+    if response.status_code == 200:
+        return response.content
+    else:
+        raise Exception(f"Failed to fetch data from API. Status code: {response.status_code}")
 
 def fetch_data_from_api(api_url,buyer_id,contract_id, vertical_id, contract_status):
     params = {
@@ -36,7 +44,17 @@ def parse_xml_response(xml_content):
     df = pd.DataFrame(zip_codes, columns=['Zip Code'])
     return df
 
-def parse_xml_response_multiple(xml_content):
+def parse_buyer_xml_response(xml_content):
+    namespaces = {'ns': 'http://cakemarketing.com/api/2/'}
+    root = ET.fromstring(xml_content)
+    buyer_elements = root.findall('.//ns:buyer', namespaces)
+    buyers = []
+    for buyer_element in buyer_elements:
+        buyer_id = buyer_element.find('ns:buyer_id', namespaces).text
+        buyers.append(buyer_id)
+    return buyers
+
+def parse_contract_xml_response_multiple(xml_content):
     namespaces = {
         'ns': 'http://cakemarketing.com/api/4/',
         'API': 'API:id_name_store'
@@ -49,6 +67,7 @@ def parse_xml_response_multiple(xml_content):
         contract_id = contract.find('ns:buyer_contract_id', namespaces).text
         buyer_element = contract.find('.//ns:buyer', namespaces)
         buyer_id = buyer_element.find('API:buyer_id', namespaces).text if buyer_element is not None else None
+        buyer_name = buyer_element.find('API:buyer_name', namespaces).text if buyer_element is not None else None
         filter_elements = contract.findall('.//ns:filters/ns:filter', namespaces)
         zip_codes = []
         for filter_element in filter_elements:
@@ -56,9 +75,9 @@ def parse_xml_response_multiple(xml_content):
             if filter_type_name == "Zip code contains":
                 param_string = filter_element.find('ns:param_string', namespaces).text
                 zip_codes.extend(param_string.split('|'))
-        data.extend([(contract_id, buyer_id, zipcode) for zipcode in zip_codes])
+        data.extend([(contract_id, buyer_id, buyer_name, zipcode) for zipcode in zip_codes])
     
-    df = pd.DataFrame(data, columns=['Contract ID', 'Buyer ID', 'Zip Code'])
+    df = pd.DataFrame(data, columns=['Contract ID', 'Buyer ID', 'Buyer Name','Zip Code'])
     return df
 
 def write_file(df,buyer_id,contract_id):
@@ -95,8 +114,26 @@ def output_csv_files(df, output_dir):
                     f.write(f'{zip_code}\n')
 #1 = active   | 2 = inactive | 3 = Pending
 def get_zips_from_cake(buyer_id,contract_id,vertical_id,contract_status=1,output_type="df"):
-    xml_content = fetch_data_from_api(base_url,buyer_id,contract_id,vertical_id,contract_status)
-    df_all =parse_xml_response_multiple(xml_content)
+    contract_params = {
+        "api_key": api_key,
+        "buyer_id": buyer_id,
+        "buyer_contract_id": contract_id,
+        "vertical_id": vertical_id,
+        "buyer_contract_status_id":contract_status
+    }
+    buyer_params={
+        "api_key": api_key,
+        "buyer_id": 0,
+        "account_status_id": 1
+    }
+    active_buyers_xml_content=cake_get_request(get_buyers_base_url, buyer_params)
+    active_buyers=parse_buyer_xml_response(active_buyers_xml_content)
+    contract_xml_content = cake_get_request(get_contract_base_url, contract_params)
+    
+    df_all =parse_contract_xml_response_multiple(contract_xml_content)
+    
+    df_all = df_all[df_all['Buyer ID'].isin(active_buyers)]
+
     if output_type=="csv":
         individual_files_directory="cake_active_buyer_zips/"+str(vertical_id)
         combined_file_path="Cake_active_buyer_zips_"+str(vertical_id)+".csv"
@@ -119,4 +156,4 @@ class CakeZips:
             print("Files have been created")
 
 
-#get_zips_from_cake(749,0,134,1,"csv")
+get_zips_from_cake(0,0,134,1,"csv")
