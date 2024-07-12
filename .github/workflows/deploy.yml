@@ -18,6 +18,7 @@ jobs:
       with:
         host: ${{ secrets.WINDOWS_HOST }}
         username: ${{ secrets.WINDOWS_USERNAME }}
+        password: ${{ secrets.WINDOWS_PASSWORD }}
         key: ${{ secrets.WINDOWS_SSH_KEY }}
         port: 22
         script: |
