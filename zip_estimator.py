@@ -193,7 +193,7 @@ def print_to_terminal(data):
     print(f"Expected total lead share: {total_expected_share}")
 
 def main(output_method="print"): 
-
+    print ("checking leads from: ",start_date," to ",end_date)
     if use_cake_contract=="yes":
         print(f"Getting zips from cake: buyer: {buyer_id}, contract :{contract_id})")
         raw_zip_df=get_zips_from_cake(buyer_id,contract_id,vertical_id)
