@@ -7,7 +7,10 @@ from get_cake_zips import get_zips_from_cake
 from config_loader import ExcelConfig
 import datetime
 import json
-   #test deployment
+
+#Not used but here because SQLAlchemy uses it under the hood and need it to get picked up in requirements file 
+import pyscopg2 as pg
+
 load_dotenv()
 
 # Get user input uncomment to use and comment hard coded values
