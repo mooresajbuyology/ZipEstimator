@@ -155,5 +155,9 @@ class CakeZips:
         else:
             print("Files have been created")
 
+def main():
+    vertical="135"
+    get_zips_from_cake(0,0,vertical,1,"csv")
+if __name__ == "__main__":
+    main()
 
-get_zips_from_cake(0,0,134,1,"csv")

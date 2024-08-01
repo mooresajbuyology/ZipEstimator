@@ -1,15 +1,13 @@
 import pandas as pd
 import math
 from sqlalchemy import create_engine
+import psycopg2 as pg #Not used but here because SQLAlchemy uses it under the hood and need it to get picked up in requirements file 
 import os
 from dotenv import load_dotenv
 from get_cake_zips import get_zips_from_cake
 from config_loader import ExcelConfig
 import datetime
 import json
-
-#Not used but here because SQLAlchemy uses it under the hood and need it to get picked up in requirements file 
-import pyscopg2 as pg
 
 load_dotenv()
 
