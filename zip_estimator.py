@@ -197,7 +197,7 @@ def main(output_method="print"):
     print ("checking leads from: ",start_date," to ",end_date)
     if use_cake_contract=="yes":
         print(f"Getting zips from cake: buyer: {buyer_id}, contract :{contract_id})")
-        raw_zip_df=get_zips_from_cake(buyer_id,contract_id,vertical_id)
+        raw_zip_df=get_zips_from_cake(buyer_id,contract_id,vertical_id,contract_status=0,output_type="df")
         zipcodes = pd.DataFrame(raw_zip_df['Zip Code'].astype(str).rename('Zip'))
     else:  
         zipcodes =[]

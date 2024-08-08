@@ -1,8 +1,7 @@
 CREATE TABLE cake_filters (
     filter_id SERIAL PRIMARY KEY,
     vertical_id INT,
-    cake_filter_id INT unique,
-    filter_type_id INT,
+    filter_type_id INT unique,
     filter_name TEXT,
     operator TEXT,
     lead_field TEXT,
@@ -11,12 +10,13 @@ CREATE TABLE cake_filters (
 );
 
 
-CREATE TABLE buyer_contract_filters (
+CREATE TABLE cake_buyer_contract_filters (
     buyer_filter_id SERIAL PRIMARY KEY,
     vertical_id INT,
     buyer_id INT,
     contract_id INT,
-    filter_id INT not null foriegn key references cake_filters(filter_id),
+    cake_filter_id INT unique,
+    filter_id INT not null foreign key references cake_filters(filter_id),
     filter_type_id INT,
     filter_name TEXT,
     filter_values TEXT[],
